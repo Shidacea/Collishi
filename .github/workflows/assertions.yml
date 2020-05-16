@@ -1,11 +1,6 @@
 name: CollisionAssertions
 
-on:
-  release:
-    types: [published, created, edited, prereleased]
-  pull_request:
-    branches:
-      - master
+on: [push, release, pull_request]
 
 jobs:
 
