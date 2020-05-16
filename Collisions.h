@@ -2,7 +2,9 @@
 
 #include <algorithm>
 
-//! Here resides the actual mathematical core of the collision routines
+//! Collishi version 0.2.0
+
+//! Here resides the actual mathematical core of the collision routines from the Shidacea engine
 //! These are completely decoupled from any Ruby or SFML magic
 
 //! Sadly, std::abs is not a constexpr, so this definition will provide one
@@ -117,8 +119,8 @@ constexpr bool collision_point_box(float x1, float y1, float x2, float y2, float
 
 	//! Literally the definition of an AABB
 
-	if (x1 < x2 - w2) return false;
-	if (y1 < y2 - h2) return false;
+	if (x1 < x2) return false;
+	if (y1 < y2) return false;
 	if (x2 + w2 < x1) return false;
 	if (y2 + h2 < y1) return false;
 	
@@ -272,9 +274,9 @@ constexpr bool collision_line_box(float x1, float y1, float dx1, float dy1, floa
 
 	//! Nominators of the line parameter
 
-	auto nominator_x_neg = x2 - w2 - x1;
+	auto nominator_x_neg = x2 - x1;
 	auto nominator_x_pos = x2 + w2 - x1;
-	auto nominator_y_neg = y2 - h2 - y1;
+	auto nominator_y_neg = y2 - y1;
 	auto nominator_y_pos = y2 + h2 - y1;
 
 	//! These terms can be obtained by inserting the line parameter for one coordinate into the intersection equation
@@ -414,8 +416,8 @@ constexpr bool collision_circle_box(float x1, float y1, float r1, float x2, floa
 
 	auto dxp = (x2 + w2 - x1);
 	auto dyp = (y2 + h2 - y1);
-	auto dxm = (x2 - w2 - x1);
-	auto dym = (y2 - h2 - y1);
+	auto dxm = (x2 - x1);
+	auto dym = (y2 - y1);
 
 	//! Check for intersection of the circle projections with the AABB projections
 
@@ -568,16 +570,16 @@ constexpr bool collision_box_box(float x1, float y1, float w1, float h1, float x
 
 	//! Simple generalization of point/box
 
-	if (x1 + w1 < x2 - w2) return false;
-	if (y1 + h1 < y2 - h2) return false;
-	if (x2 + w2 < x1 - w1) return false;
-	if (y2 + h2 < y1 - h1) return false;
+	if (x1 + w1 < x2) return false;
+	if (y1 + h1 < y2 ) return false;
+	if (x2 + w2 < x1) return false;
+	if (y2 + h2 < y1) return false;
 
 	return true;
 
 }
 
-#ifndef SHIDACEA_IGNORE_STATIC_ASSERTIONS
+#ifndef IGNORE_STATIC_ASSERTIONS
 
 //! Compile time assertions to check some test cases
 //! Please submit a bug report if one of these fails
@@ -618,7 +620,7 @@ static_assert(false == collision_point_line(1.0f, 0.0f,     1.1f, 0.0f, 1.0f, 0.
 
 static_assert(true == collision_point_circle(2.0f, 3.0f,     4.0f, 5.0f, 3.0f));
 
-static_assert(true == collision_point_box(-3.0f, -5.0f,     3.0f, 2.0f, 10.0f, 9.0f));
+static_assert(true == collision_point_box(-3.0f, -5.0f,     -7.0f, -8.0f, 20.0f, 18.0f));
 
 static_assert(true == collision_point_triangle(0.0f, 0.0f,     0.0f, 0.2f, 3.0f, -1.0f, -3.0f, -1.0f));
 static_assert(false == collision_point_triangle(0.0f, 0.0f,     0.0f, 0.2f, 3.0f, 1.0f, -3.0f, 1.0f));
@@ -637,28 +639,28 @@ static_assert(true == collision_line_circle(1.0f, 1.0f, 8.0f, 8.0f,      4.0f, 4
 static_assert(false == collision_line_circle(1.0f, 1.0f, 8.0f, 8.0f,      10.0f, 10.0f, 1.4f));
 static_assert(true == collision_line_circle(1.0f, 1.0f, 8.0f, 8.0f,      10.0f, 10.0f, 1.5f));
 
-static_assert(true == collision_line_box(3.0f, 2.0f, 8.0f, 11.0f,     5.0f, 6.0f, 5.0f, 5.0f));
-static_assert(false == collision_line_box(11.0f, 0.0f, 11.0f, 13.0f,     5.0f, 6.0f, 5.0f, 5.0f));
-static_assert(true == collision_line_box(1.0f, 1.0f, 7.0f, 7.0f,     4.0f, 4.0f, 2.0f, 2.0f));
+static_assert(true == collision_line_box(3.0f, 2.0f, 8.0f, 11.0f,     0.0f, 1.0f, 10.0f, 10.0f));
+static_assert(false == collision_line_box(11.0f, 0.0f, 11.0f, 13.0f,     0.0f, 1.0f, 10.0f, 10.0f));
+static_assert(true == collision_line_box(1.0f, 1.0f, 7.0f, 7.0f,     2.0f, 2.0f, 4.0f, 4.0f));
 
 static_assert(true == collision_line_triangle(3.0f, 0.0f, 0.0f, 2.0f,     2.0f, 1.0f, -1.0f, 3.0f, 2.0f, 1.0f));
 static_assert(false == collision_line_triangle(2.0f, 4.0f, 2.0f, 0.0f,     2.0f, 1.0f, -1.0f, 3.0f, 2.0f, 1.0f));
 static_assert(true == collision_line_triangle(2.0f, 1.0f, -1.0f, 3.0f,     2.0f, 1.0f, -1.0f, 3.0f, 2.0f, 1.0f));
 static_assert(true == collision_line_triangle(2.0f, 1.0f, 2.0f, 1.0f,     2.0f, 1.0f, -1.0f, 3.0f, 2.0f, 1.0f));
 
-static_assert(true == collision_circle_box(1.0f, -3.0f, 4.0f,     0.0f, 0.0f, 5.0f, 4.0f));
-static_assert(true == collision_circle_box(1.0f, -3.0f, 1.0f,     0.0f, 0.0f, 5.0f, 2.0f));
-static_assert(false == collision_circle_box(1.0f, -3.0f, 0.9f,     0.0f, 0.0f, 5.0f, 2.0f));
-static_assert(true == collision_circle_box(2.0f, 1.0f, 0.1f,     0.0f, 0.0f, 2.0f, 2.0f));
-static_assert(false == collision_circle_box(3.0f, 3.0f, 1.0f,     0.0f, 0.0f, 2.0f, 2.0f));
-static_assert(true == collision_circle_box(3.0f, 3.0f, 1.5f,     0.0f, 0.0f, 2.0f, 2.0f));
-static_assert(true == collision_circle_box(3.0f, 3.0f, 2.0f,     0.0f, 0.0f, 2.0f, 2.0f));
+static_assert(true == collision_circle_box(1.0f, -3.0f, 4.0f,     -5.0f, -4.0f, 10.0f, 8.0f));
+static_assert(true == collision_circle_box(1.0f, -3.0f, 1.0f,     -5.0f, -2.0f, 10.0f, 4.0f));
+static_assert(false == collision_circle_box(1.0f, -3.0f, 0.9f,     -5.0f, -2.0f, 10.0f, 4.0f));
+static_assert(true == collision_circle_box(2.0f, 1.0f, 0.1f,     -2.0f, -2.0f, 4.0f, 4.0f));
+static_assert(false == collision_circle_box(3.0f, 3.0f, 1.0f,     -2.0f, -2.0f, 4.0f, 4.0f));
+static_assert(true == collision_circle_box(3.0f, 3.0f, 1.5f,     -2.0f, -2.0f, 4.0f, 4.0f));
+static_assert(true == collision_circle_box(3.0f, 3.0f, 2.0f,     -2.0f, -2.0f, 4.0f, 4.0f));
 
 static_assert(false == collision_circle_triangle(5.0f, 5.0f, 3.0f,     3.0f, 2.0f, -1.0f, -5.0f, -5.0f, -1.0f));
 static_assert(true == collision_circle_triangle(0.0f, 0.0f, 1.0f,     3.0f, 2.0f, -1.0f, -5.0f, -5.0f, -1.0f));
 static_assert(true == collision_circle_triangle(5.0f, 5.0f, 4.0f,     3.0f, 2.0f, -1.0f, -5.0f, -5.0f, -1.0f));
 
-static_assert(true == collision_box_box(1.0f, 2.0f, 3.0f, 4.0f,     4.5f, 7.5f, 2.0f, 2.0f));
-static_assert(false == collision_box_box(1.0f, 2.0f, 3.0f, 4.0f,     4.5f, 7.5f, 1.4f, 1.4f));
+static_assert(true == collision_box_box(-2.0f, -2.0f, 6.0f, 8.0f,     2.5f, 5.5f, 4.0f, 4.0f));
+static_assert(false == collision_box_box(-2.0f, -2.0f, 6.0f, 8.0f,     3.1f, 6.1f, 2.8f, 2.8f));
 
 #endif
