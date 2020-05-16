@@ -1,0 +1,35 @@
+name: CollisionAssertions
+
+on:
+  release:
+    types: [published, created, edited, prereleased]
+  pull_request:
+    branches:
+      - master
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Deps
+      run: |
+        sudo apt update
+        sudo apt install -y g++-8
+        sudo apt install -y gcc-8
+        
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 999
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 999
+        
+        echo "Dependencies installed."
+        g++ --version
+    
+    - name: Run
+      run: |
+        g++ test.cpp -o test
+        ./test
+        
+        echo "Build completed"
