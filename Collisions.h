@@ -601,6 +601,8 @@ namespace Collishi {
 		//! Also, the overlap checks were shifted to the projection of (x1|y1) on the normal, to avoid some terms
 		//! Overall, this follows the typical workflow of the SAT collision algorithms
 
+		//! Projection to the a normal
+
 		auto x21_sya2 = x21 * sya2;
 		auto y21_sxa2 = y21 * sxa2;
 
@@ -611,6 +613,8 @@ namespace Collishi {
 		auto proj_b_on_a = syb2 * sxa2 - sxb2 * sya2;
 
 		if (!overlap({ 0.0f, h1_sxa2, -w1_sya2, h1_sxa2 - w1_sya2 }, { -proj_x1_on_a, proj_b_on_a - proj_x1_on_a })) return false;
+
+		//! Projection to the b normal
 
 		auto x21_syb2 = x21 * syb2;
 		auto y21_sxb2 = y21 * sxb2;
@@ -623,6 +627,8 @@ namespace Collishi {
 
 		if (!overlap({ 0.0f, h1_sxb2, -w1_syb2, h1_sxb2 - w1_syb2 }, { -proj_x1_on_b, proj_a_on_b - proj_x1_on_b })) return false;
 
+		//! Projection to the c normal
+
 		auto proj_x1_on_c = -x21_sya2 + x21_syb2 - y21_sxb2 + y21_sxa2 - sxa2 * sya2 + proj_b_on_a + sya2 * sxa2;
 		auto proj_2_on_c = proj_b_on_a;
 
@@ -630,6 +636,97 @@ namespace Collishi {
 		auto diff_w1_projections = w1_sya2 - w1_syb2;
 
 		if (!overlap({ 0.0f, diff_h1_projections, diff_w1_projections, diff_w1_projections + diff_h1_projections }, { -proj_x1_on_c, proj_2_on_c - proj_x1_on_c })) return false;
+
+		return true;
+
+	}
+
+	constexpr bool collision_triangle_triangle(float x1, float y1, float sxa1, float sya1, float sxb1, float syb1, float x2, float y2, float sxa2, float sya2, float sxb2, float syb2) {
+
+		//! This routine uses the SAT (you guessed it)
+		//! The normals to be tested are the three normals of each triangle
+		//! There is nothing more to explain in more detail, as this is straightforward, but tedious
+		//! The projections on the c normals need more calculations, so they come last
+		//! Once again, the overlap checks were shifted to avoid unnecessary calculations
+
+		auto x21 = x2 - x1;
+		auto y21 = y2 - y1;
+
+		//! Projection on normal a1
+
+		auto x21_sya1 = x21 * sya1;
+		auto y21_sxa1 = y21 * sxa1;
+
+		auto sxa2_sya1 = sxa2 * sya1;
+		auto sxb2_sya1 = sxb2 * sya1;
+		auto sya2_sxa1 = sya2 * sxa1;
+		auto syb2_sxa1 = syb2 * sxa1;
+		
+		auto proj_x2_on_a1 = y21_sxa1 - x21_sya1;
+		auto proj_a2_on_a1 = sya2_sxa1 - sxa2_sya1;
+		auto proj_b2_on_a1 = syb2_sxa1 - sxb2_sya1;
+		auto proj_b1_on_a1 = sxb1 * (-sya1) + syb1 * sxa1;
+
+		if (!overlap({ -proj_x2_on_a1, proj_b1_on_a1 - proj_x2_on_a1 }, { 0.0f, proj_a2_on_a1, proj_b2_on_a1 })) return false;
+
+		//! Projection on normal b1
+
+		auto x21_syb1 = x21 * syb1;
+		auto y21_sxb1 = y21 * sxb1;
+
+		auto sxa2_syb1 = sxa2 * syb1;
+		auto sxb2_syb1 = sxb2 * syb1;
+		auto sya2_sxb1 = sya2 * sxb1;
+		auto syb2_sxb1 = syb2 * sxb1;
+
+		auto proj_x2_on_b1 = y21_sxb1 - x21_syb1;
+		auto proj_a2_on_b1 = sya2_sxb1 - sxa2_syb1;
+		auto proj_b2_on_b1 = syb2_sxb1 - sxb2_syb1;
+		auto proj_a1_on_b1 = -proj_b1_on_a1;
+
+		if (!overlap({ -proj_x2_on_b1, proj_a1_on_b1 - proj_x2_on_b1 }, { 0.0f, proj_a2_on_b1, proj_b2_on_b1 })) return false;
+
+		//! Projection on normal a2
+
+		auto x21_sya2 = x21 * sya2;
+		auto y21_sxa2 = y21 * sxa2;
+
+		auto proj_x1_on_a2 = x21_sya2 - y21_sxa2;
+		auto proj_a1_on_a2 = sxa2_sya1 - sya2_sxa1;
+		auto proj_b1_on_a2 = sxa2_syb1 - sya2_sxb1;
+		auto proj_b2_on_a2 = sxb2 * (-sya2) + syb2 * sxa2;
+
+		if (!overlap({ -proj_x1_on_a2, proj_b2_on_a2 - proj_x1_on_a2 }, { 0.0f, proj_a1_on_a2, proj_b1_on_a2 })) return false;
+
+		//! Projection on normal b2
+
+		auto x21_syb2 = x21 * syb2;
+		auto y21_sxb2 = y21 * sxb2;
+
+		auto proj_x1_on_b2 = x21_syb2 - y21_sxb2;
+		auto proj_a1_on_b2 = sxb2_sya1 - syb2_sxa1;
+		auto proj_b1_on_b2 = sxb2_syb1 - syb2_sxb1;
+		auto proj_a2_on_b2 = -proj_b2_on_a2;
+
+		if (!overlap({ -proj_x1_on_b2, proj_a2_on_b2 - proj_x1_on_b2 }, { 0.0f, proj_a1_on_b2, proj_b1_on_b2 })) return false;
+
+		//! Projection on normal c1
+
+		auto proj_x2_on_c1 = x21_sya1 - x21_syb1 + proj_b1_on_a1 + y21_sxb1 - y21_sxa1;
+		auto proj_a2_on_c1 = sxa2_sya1 - sxa2_syb1 + sya2_sxb1 - sya2_sxa1;
+		auto proj_b2_on_c1 = sxb2_sya1 - sxb2_syb1 + syb2_sxb1 - syb2_sxa1;
+		auto proj_x1_on_c1 = proj_b1_on_a1;
+
+		if (!overlap({ -proj_x2_on_c1, proj_x1_on_c1 - proj_x2_on_c1 }, { 0.0f, proj_a2_on_c1, proj_b2_on_c1 })) return false;
+
+		//! Projection on normal c2
+
+		auto proj_x1_on_c2 = -x21_sya2 + x21_syb2 + proj_b2_on_a2 - y21_sxb2 + y21_sxa2;
+		auto proj_a1_on_c2 = sya2_sxa1 - syb2_sxa1 + sxb2_sya1 - sxa2_sya1;
+		auto proj_b1_on_c2 = sya2_sxb1 - syb2_sxb1 + sxb2_syb1 - sxa2_syb1;
+		auto proj_x2_on_c2 = proj_b2_on_a2;
+
+		if (!overlap({ -proj_x1_on_c2, proj_x2_on_c2 - proj_x1_on_c2 }, { 0.0f, proj_a1_on_c2, proj_b1_on_c2 })) return false;
 
 		return true;
 
@@ -725,5 +822,16 @@ static_assert(true == Collishi::collision_box_triangle(-5.0f, 2.0f, 4.0f, 2.0f, 
 static_assert(false == Collishi::collision_box_triangle(-5.0f, 2.0f, 3.0f, 2.0f,     1.0f, 5.0f, 0.0f, -4.0f, -3.0f, -4.0f));
 static_assert(false == Collishi::collision_box_triangle(-1.0f, -1.0f, 1.0f, 1.0f,     1.0f, 5.0f, 0.0f, -4.0f, -3.0f, -4.0f));
 static_assert(true == Collishi::collision_box_triangle(-1.0f, -1.0f, 1.0f, 2.5f,     1.0f, 5.0f, 0.0f, -4.0f, -3.0f, -4.0f));
+
+static_assert(true == Collishi::collision_triangle_triangle(0.0f, 3.0f, 1.0f, 2.0f, 3.0f, 2.0f,     2.0f, 2.0f, 1.0f, 4.0f, 2.0f, 3.0f));
+static_assert(false == Collishi::collision_triangle_triangle(0.0f, 3.0f, 1.0f, 2.0f, 3.0f, 2.0f,     4.0f, 4.0f, 1.0f, 0.0f, 1.0f, 1.0f));
+static_assert(false == Collishi::collision_triangle_triangle(0.0f, 3.0f, 1.0f, 2.0f, 3.0f, 2.0f,     3.0f, 1.0f, 0.0f, 2.0f, 4.0f, 2.0f));
+static_assert(false == Collishi::collision_triangle_triangle(0.0f, 3.0f, 1.0f, 2.0f, 3.0f, 2.0f,     4.0f, 2.0f, 2.0f, 2.0f, 3.0f, 3.0f));
+static_assert(false == Collishi::collision_triangle_triangle(2.0f, 2.0f, 1.0f, 4.0f, 2.0f, 3.0f,     4.0f, 4.0f, 1.0f, 0.0f, 1.0f, 1.0f));
+static_assert(false == Collishi::collision_triangle_triangle(2.0f, 2.0f, 1.0f, 4.0f, 2.0f, 3.0f,     3.0f, 1.0f, 0.0f, 2.0f, 4.0f, 2.0f));
+static_assert(false == Collishi::collision_triangle_triangle(2.0f, 2.0f, 1.0f, 4.0f, 2.0f, 3.0f,     4.0f, 2.0f, 2.0f, 2.0f, 3.0f, 3.0f));
+static_assert(false == Collishi::collision_triangle_triangle(4.0f, 4.0f, 1.0f, 0.0f, 1.0f, 1.0f,     3.0f, 1.0f, 0.0f, 2.0f, 4.0f, 2.0f));
+static_assert(false == Collishi::collision_triangle_triangle(4.0f, 4.0f, 1.0f, 0.0f, 1.0f, 1.0f,     4.0f, 2.0f, 2.0f, 2.0f, 3.0f, 3.0f));
+static_assert(true == Collishi::collision_triangle_triangle(3.0f, 1.0f, 0.0f, 2.0f, 4.0f, 2.0f,     4.0f, 2.0f, 2.0f, 2.0f, 3.0f, 3.0f));
 
 #endif
