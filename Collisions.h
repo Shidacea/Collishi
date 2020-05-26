@@ -1,6 +1,16 @@
 #pragma once
 
+//! If COLLISHI_MINMAX_FUNCTION is not set, the standard library function std::minmax will be used
+//! In case you do not want to use the standard library, you need to provide an alternative
+//! This can be done using the following definition in your own program:
+//! #define COLLISHI_MINMAX_FUNCTION your_own_minmax_function
+
+#ifndef COLLISHI_MINMAX_FUNCTION
+
 #include <algorithm>
+#define COLLISHI_MINMAX_FUNCTION std::minmax
+
+#endif
 
 namespace Collishi {
 
@@ -39,7 +49,7 @@ namespace Collishi {
 
 	template <class T> constexpr bool between(T value, T border_1, T border_2) {
 
-		auto interval = std::minmax(border_1, border_2);
+		auto interval = COLLISHI_MINMAX_FUNCTION(border_1, border_2);
 
 		if (value < interval.first) return false;
 		if (value > interval.second) return false;
@@ -50,8 +60,8 @@ namespace Collishi {
 
 	template <class T> constexpr bool overlap(std::initializer_list<T> interval_1, std::initializer_list<T> interval_2) {
 
-		auto interval_1_minmax = std::minmax(interval_1);
-		auto interval_2_minmax = std::minmax(interval_2);
+		auto interval_1_minmax = COLLISHI_MINMAX_FUNCTION(interval_1);
+		auto interval_2_minmax = COLLISHI_MINMAX_FUNCTION(interval_2);
 
 		if (interval_2_minmax.second < interval_1_minmax.first) return false;
 		if (interval_1_minmax.second < interval_2_minmax.first) return false;
@@ -111,7 +121,7 @@ namespace Collishi {
 		auto dx = x1 - x2;
 		auto dy = y1 - y2;
 
-		if (dx * dx + dy * dy > r2* r2) return false;
+		if (dx * dx + dy * dy > r2 * r2) return false;
 
 		return true;
 
@@ -734,7 +744,7 @@ namespace Collishi {
 
 }
 
-#ifndef IGNORE_STATIC_ASSERTIONS
+#ifndef COLLISHI_IGNORE_STATIC_ASSERTIONS
 
 //! Compile time assertions to check some test cases
 //! Please submit a bug report if one of these fails
