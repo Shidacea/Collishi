@@ -525,13 +525,10 @@ namespace Collishi {
 		auto sxc2 = sxb2 - sxa2;
 		auto syc2 = syb2 - sya2;
 
-		//! Normally, the following term also contains the cross term, but the projection of the base vertex on this line lets this term vanish
-		//! Therefore, it is possible to drop it completely from the following comparison
-
-		auto proj_x1_c = dy * (sxb2 - sxa2) - dx * (syb2 - sya2);
+		auto proj_x1_c = dy * sxc2 - dx * syc2;
 		auto proj_r1_c_squared = r1_squared * (sxc2 * sxc2 + syc2 * syc2);
 
-		if (!overlap({ sign_square(-proj_x1_c), sign_square(proj_x1_c) }, { -proj_r1_c_squared, proj_r1_c_squared })) return false;
+		if (!overlap({ sign_square(-proj_x1_c), sign_square(-cross_term - proj_x1_c) }, { -proj_r1_c_squared, proj_r1_c_squared })) return false;
 
 		//! All normal checks were inconclusive, so the line from the circle to the closest vertex is required for a last test
 		//! This is again the same principle as for circle/box
